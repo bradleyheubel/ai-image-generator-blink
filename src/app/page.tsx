@@ -2,14 +2,21 @@
  
 import { useState } from "react";
 import Image from "next/image";
+
+interface Prediction {
+  id: string;
+  status: string;
+  output?: string[]; // Optional, because it might not be available immediately
+  detail?: string;   // Optional, for error details
+}
  
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const sleep = (ms : any) => new Promise((r) => setTimeout(r, ms));
  
 export default function Home() {
-  const [prediction, setPrediction] = useState(null);
+  const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [error, setError] = useState(null);
  
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e : any) => {
     e.preventDefault();
     const response = await fetch("/api/predictions", {
       method: "POST",
@@ -20,7 +27,7 @@ export default function Home() {
         prompt: e.target.prompt.value,
       }),
     });
-    let prediction = await response.json();
+    let prediction = await response.json()
     if (response.status !== 201) {
       setError(prediction.detail);
       return;
