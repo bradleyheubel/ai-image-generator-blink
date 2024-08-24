@@ -19,7 +19,7 @@ import { NextActionLink } from "@solana/actions-spec";
 import { useSearchParams } from "next/navigation";
 //const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
 const connection = new Connection(clusterApiUrl("mainnet-beta"));
-import { getCompletedAction, getNextAction, testAction } from "@/app/helper";
+import { getCompletedAction, getNextAction, nextAction, testAction } from "@/app/helper";
 import axios from "axios";
 
 const pubkeyToDonateTo = '4ypD7kxRj9DLF3PMxsY3qvp8YdNhAHZRnN3fyVDh5CFX'
@@ -36,9 +36,9 @@ export async function GET(req: NextRequest) {
 
   let response: ActionGetResponse = {
     type: "action",
-    icon: `https://action-chaining-example.vercel.app/a.webp`,
-    title: "Genrate AI Image",
-    description: "Generate an image using AI and send it to your email, paying in crypto!",
+    icon: `${requestUrl.origin}/robot-artist.jpg`,
+    title: "Generate AI Image",
+    description: "Generate an AI image",
     label: "generate",
     links: {
         actions: [
@@ -94,28 +94,25 @@ export async function POST(req: NextRequest) {
     const tx = new Transaction().add(
       SystemProgram.transfer({
         fromPubkey: sender,
-        toPubkey: new PublicKey("4ypD7kxRj9DLF3PMxsY3qvp8YdNhAHZRnN3fyVDh5CFX"),
+        toPubkey: new PublicKey(pubkeyToDonateTo),
         lamports: LAMPORTS_PER_SOL * 0.0001,
       })
     );
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
     tx.feePayer = sender;
-
     tx.add(
-        new TransactionInstruction({
-          keys: [{ pubkey: sender, isSigner: true, isWritable: true }],
-          data: Buffer.from("ahudfauihsiudhauhisd", "utf-8"),
-          programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
-        }),
-      );
-
-    const successMsg = "Thank you for your support!"
+      new TransactionInstruction({
+        keys: [{ pubkey: sender, isSigner: true, isWritable: true }],
+        data: Buffer.from("imggenblink.xyz", "utf-8"),
+        programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+      }),
+    );
 
     return NextResponse.json(
         await createPostResponse({
           fields: {
             links: {
-              next: getCompletedAction("b"),
+              next: nextAction([prompt, email]) 
             },
             transaction: tx,
             message: `Generated image`,
@@ -141,8 +138,6 @@ function validatedQueryParams(requestUrl: URL) {
     let toPubkey: PublicKey = new PublicKey(
       pubkeyToDonateTo,
     );
-    let amount: number = 0.1;
-    let token: string = "SOL"
   
     try {
       if (requestUrl.searchParams.get('to')) {
@@ -152,29 +147,7 @@ function validatedQueryParams(requestUrl: URL) {
       throw 'Invalid input query parameter: to';
     }
   
-    // try {
-    //   if (requestUrl.searchParams.get('amount')) {
-    //     amount = parseFloat(requestUrl.searchParams.get('amount')!);
-    //   }
-  
-    //   if (amount <= 0) throw 'amount is too small';
-    // } catch (err) {
-    //   throw 'Invalid input query parameter: amount';
-    // }
-
-    // try {
-    //   if (requestUrl.searchParams.get('token')) {
-    //     token = requestUrl.searchParams.get('token')!;
-    //   }
-  
-    //   //if (pubkeyMap[token] == null) throw 'not valid token';
-    // } catch (err) {
-    //   throw 'Invalid input query parameter: token';
-    // }
-  
     return {
-    //   token,
-    //   amount,
       toPubkey,
     };
   }

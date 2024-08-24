@@ -19,7 +19,9 @@ export async function POST(request : Request) {
   }
  
   const { prompt } = await request.json();
- 
+  console.log(`predicitons prompt`)
+  console.log(prompt)
+  
   const options: any = {
     version: 'f2ab8a5bfe79f02f0789a146cf5e73d2a4ff2684a98c2b303d1e1ff3814271db',
     input: { prompt }
