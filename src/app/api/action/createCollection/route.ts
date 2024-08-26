@@ -1,0 +1,199 @@
+import { VersionedTransaction, Connection, Keypair, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL, clusterApiUrl } from '@solana/web3.js';
+import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import { ActionGetResponse, ActionPostResponse, ACTIONS_CORS_HEADERS, createPostResponse } from '@solana/actions';
+import axios from 'axios';
+import { extname } from 'path';
+
+//const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+const connection = new Connection(clusterApiUrl("mainnet-beta"));
+
+export async function GET(req: NextRequest) {
+
+    const requestUrl = new URL(req.url);
+    //const { toPubkey } = validatedQueryParams(requestUrl);
+    //const toPubKey = new PublicKey(requestUrl.searchParams.get('to')!)
+    
+    const basePumpHref = new URL(
+        `/api/action/createCollection`,
+        requestUrl.origin,
+    ).toString();
+
+    let response: ActionGetResponse = {
+        type: "action",
+        icon: `${requestUrl.origin}/robot-artist.jpg`,
+        title: "Generate AI Image",
+        description: "Generate an AI image",
+        label: "generate",
+        links: {
+            actions: [
+                {
+                  label: 'test pumpfun', // button text
+                  href: `${basePumpHref}`, // this href will have a text input
+                },
+            ]
+        },
+      };
+  
+    return NextResponse.json(response, {
+      headers: ACTIONS_CORS_HEADERS,
+    });
+}
+  
+// ensures cors
+export const OPTIONS = GET;
+
+
+async function streamToString(stream: any) {
+    const chunks = [];
+    for await (const chunk of stream) {
+        chunks.push(chunk);
+    }
+    return Buffer.concat(chunks).toString('utf8');
+}
+
+export async function POST(req: NextRequest) {
+
+    //const body = (await req.json()) as { account: string; signature: string };
+    // const body = await streamToString(req.body)
+    // if (body.length == 0) {
+    //     return new Response("Empty body", {
+    //         status: 400,
+    //         headers: ACTIONS_CORS_HEADERS,
+    //     });
+    // }
+
+    // const params = req.nextUrl.searchParams.get('data') || ""
+    // const decodedParams = decodeURIComponent(params)
+    // if (decodedParams == "" || decodedParams == null){
+    //     return new Response("No data param", {
+    //         status: 400,
+    //         headers: ACTIONS_CORS_HEADERS,
+    //     });
+    // }
+    // const parsedBody = JSON.parse(decodedParams)
+    // console.log(parsedBody)
+
+
+    const toPubKey = req.nextUrl.searchParams.get('minter') || ""
+    const imgurl = decodeURIComponent(req.nextUrl.searchParams.get('imgURL') || "")
+    const tokenName = req.nextUrl.searchParams.get('name') || ""
+    const tokenTicker = req.nextUrl.searchParams.get('ticker') || ""
+    console.log(`Data: ${toPubKey} | ${imgurl} | ${tokenName} | ${tokenTicker}`)
+
+    const fileFetch = await fetch(imgurl)
+    const buffer = await fileFetch.arrayBuffer();
+    const fileData = Buffer.from(buffer);
+
+    const path = `${process.cwd()}/public/imgs/${tokenTicker}.${extname(imgurl).slice(1)}`;
+
+    const writtenFile = fs.writeFileSync(path, fileData);
+    console.log(path)
+
+    // const { searchParams } = new URL(req.url);
+    // // amount is just to show how to decide the next action
+    // const prompt = searchParams.get("prompt") as string;
+
+    // // stage is the stage of the action in the chain
+    // const email = searchParams.get("email") as string;
+
+    // Generate a random keypair for token
+    const mintKeypair = Keypair.generate(); 
+
+    const sender = new PublicKey(toPubKey);
+
+    const formData = new FormData();
+    formData.append("file", await fs.openAsBlob(path)), // Image file
+    formData.append("name", tokenName),
+    formData.append("symbol", tokenTicker),
+    formData.append("description", "This is an example token created via PumpPortal.fun"),
+    formData.append("twitter", "https://x.com/a1lon9/status/1812970586420994083"),
+    formData.append("telegram", "https://x.com/a1lon9/status/1812970586420994083"),
+    formData.append("website", "https://pumpportal.fun"),
+    formData.append("showName", "true");
+
+    //axios.get("")
+
+    const metadataResponse = await fetch("https://pump.fun/api/ipfs", {
+        method: "POST",
+        body: formData,
+    });
+    const metadataResponseJSON = await metadataResponse.json();
+    console.log(metadataResponseJSON)
+
+    // Get the create transaction
+    const response = await fetch(`https://pumpportal.fun/api/trade-local`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            "publicKey": toPubKey,
+            "action": "create",
+            "tokenMetadata": {
+                name: metadataResponseJSON.metadata.name,
+                symbol: metadataResponseJSON.metadata.symbol,
+                uri: metadataResponseJSON.metadataUri
+            },
+            "mint": mintKeypair.publicKey.toBase58(),
+            "denominatedInSol": "true",
+            "amount": 0.001, // dev buy of 0.001 SOL
+            "slippage": 10, 
+            "priorityFee": 0.0005,
+            "pool": "pump"
+        })
+    });
+
+    if(response.status === 200){ // successfully generated transaction
+        console.log("gerated token")
+    // get the latest blockhash amd block height
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+
+
+  
+    const data = await response.arrayBuffer();
+
+    console.log(response)
+    
+    const transaction = VersionedTransaction.deserialize(new Uint8Array(data))
+    transaction.sign([mintKeypair])
+    const payload: ActionPostResponse = await createPostResponse({
+        fields: {
+          transaction,
+          message: "Launched!",
+        },
+      });
+    
+    return Response.json(payload, {
+        headers: ACTIONS_CORS_HEADERS,
+      });
+
+
+
+
+    // const tx = VersionedTransaction.deserialize(new Uint8Array(data));
+    // tx.sign([mintKeypair, signerKeyPair]);
+
+    //   console.log("Transaction: https://solscan.io/tx/" + signature);
+
+        // const tx = VersionedTransaction.deserialize(new Uint8Array(data));
+    // tx.sign([mintKeypair, signerKeyPair]);
+    // const signature = await web3Connection.sendTransaction(tx)
+    // console.log("Transaction: https://solscan.io/tx/" + signature);
+
+    //const txData = new Uint8Array(data)
+    // const transaction = new Transaction({
+    //     feePayer: sender,
+    //     blockhash,
+    //     lastValidBlockHeight,
+    //   }).add(...txData);
+    
+      
+    //   return Response.json(payload, {
+    //     headers: ACTIONS_CORS_HEADERS,
+    //   });
+    } else {
+        console.log(response.statusText); // log error
+    }
+
+}

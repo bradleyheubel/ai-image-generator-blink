@@ -22,44 +22,9 @@ export const getCompletedAction = (data: Array<string>): NextActionLink => {
     // return response
 };
 
-export const nextAction = (data : Array<string>) : NextActionLink => {
+export const generateImgAction = (data : Array<string>) : NextActionLink => {
   return {
     type: "post",
-    href: `http://localhost:3000/api?data=${JSON.stringify(data)}`
+    href: `http://localhost:3000/api/action/generate?data=${JSON.stringify(data)}`
   }
 }
-
-export const testAction = (data: Array<string>): NextActionLink => {
-
-  return {
-    type: "post",
-    href: `http://localhost:3000/api?data=${JSON.stringify(data)}`
-  }
-}
-
-export const getNextAction = (stage: string): NextActionLink => {
-  return {
-    type: "inline",
-    action: {
-      description: `Action ${stage}`,
-      icon: `https://action-chaining-example.vercel.app/${stage}.webp`,
-      label: `Action ${stage} Label`,
-      title: `Action ${stage}`,
-      type: "action",
-      links: {
-        actions: [
-          {
-            label: `Submit ${stage}`, // button text
-            href: `/api/action?amount={amount}&stage=${stage}`, // api endpoint
-            parameters: [
-              {
-                name: "amount", // field name
-                label: "Enter a custom SOL amount", // text input placeholder
-              },
-            ],
-          },
-        ],
-      },
-    },
-  };
-};

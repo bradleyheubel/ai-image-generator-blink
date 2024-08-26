@@ -19,7 +19,7 @@ import { NextActionLink } from "@solana/actions-spec";
 import { useSearchParams } from "next/navigation";
 //const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
 const connection = new Connection(clusterApiUrl("mainnet-beta"));
-import { getCompletedAction, getNextAction, nextAction, testAction } from "@/app/helper";
+import { getCompletedAction, generateImgAction } from "@/app/helper";
 import axios from "axios";
 
 const pubkeyToDonateTo = '4ypD7kxRj9DLF3PMxsY3qvp8YdNhAHZRnN3fyVDh5CFX'
@@ -27,10 +27,14 @@ const pubkeyToDonateTo = '4ypD7kxRj9DLF3PMxsY3qvp8YdNhAHZRnN3fyVDh5CFX'
 export async function GET(req: NextRequest) {
     const requestUrl = new URL(req.url);
     const { toPubkey } = validatedQueryParams(requestUrl);
-    let assetPrices = {"SOL": "0", "BONK": "0", "USDC": "1"}
 
     const baseHref = new URL(
         `/api/action?to=${toPubkey.toBase58()}`,
+        requestUrl.origin,
+      ).toString();
+
+      const basePumpHref = new URL(
+        `/api/action/createCollection?to=${toPubkey.toBase58()}`,
         requestUrl.origin,
       ).toString();
 
@@ -47,18 +51,22 @@ export async function GET(req: NextRequest) {
               href: `${baseHref}&prompt={prompt}&email={email}`, // this href will have a text input
               parameters: [
                 {
-                  type: "text",
+                  type: "textarea",
                   required: true,
                   name: "prompt",
                   label: "Describe the image",
                 },
                 {
-                  type: "text",
-                  required: true,
+                  type: "email",
+                  required: false,
                   name: "email",
                   label: "Email address to receive image",
                 },
               ],
+            },
+            {
+              label: 'test pumpfun', // button text
+              href: `${basePumpHref}`, // this href will have a text input
             },
         ]
     },
@@ -112,7 +120,7 @@ export async function POST(req: NextRequest) {
         await createPostResponse({
           fields: {
             links: {
-              next: nextAction([prompt, email]) 
+              next: generateImgAction([prompt, email]) 
             },
             transaction: tx,
             message: `Generated image`,

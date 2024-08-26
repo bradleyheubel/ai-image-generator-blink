@@ -11,14 +11,14 @@ const WEBHOOK_HOST = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : process.env.NGROK_HOST;
  
-export async function POST(request : Request) {
+export async function genImgPrediction(prompt : string) {
   if (!process.env.REPLICATE_API_TOKEN) {
     throw new Error(
       'The REPLICATE_API_TOKEN environment variable is not set. See README.md for instructions on how to set it.'
     );
   }
  
-  const { prompt } = await request.json();
+  //const { prompt } = await request.json();
   console.log(`predicitons prompt`)
   console.log(prompt)
   
@@ -36,8 +36,22 @@ export async function POST(request : Request) {
   const prediction = await replicate.predictions.create(options);
  
   if (prediction?.error) {
-    return NextResponse.json({ detail: prediction.error }, { status: 500 });
+    return [false, prediction.error]
   }
- 
-  return NextResponse.json(prediction, { status: 201 });
+  console.log("prediction in genImg")
+  console.log(prediction)
+  console.log("------")
+  return [true, prediction];
 }
+
+export async function checkPrediction(id: string) {
+    console.log(`checkPrediction: id: ${id} `)
+    //console.log(id)
+    const prediction = await replicate.predictions.get(id);
+   
+    if (prediction?.error) {
+      return [false, prediction.error]
+    }
+   
+    return [true, prediction]
+  }

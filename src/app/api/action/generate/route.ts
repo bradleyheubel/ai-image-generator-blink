@@ -7,7 +7,8 @@ import {
   } from "@solana/actions";
 import axios from "axios";
 import { Connection, PublicKey } from "@solana/web3.js";
-import clientPromise from "../mongodb"
+import clientPromise from "../../../mongodb"
+import { checkPrediction, genImgPrediction } from "@/app/imgGen";
 
 const sleep = (ms: number | undefined) => {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -19,20 +20,21 @@ async function waitForImage(prediction : any) {
     return new Promise(async (resolve, reject) => {
         try {
             while (
-                prediction.status !== "succeeded" &&
-                prediction.status !== "failed" ||
-                prediction.output == null
+                prediction[1].status !== "succeeded" &&
+                prediction[1].status !== "failed" ||
+                prediction[1].output == null
             ) {
                 await sleep(500);
-                const response = await fetch(`${origin}/api/predictions/` + prediction.id);
-                if (response.status !== 200) {
-                    reject(new Error("Failed to fetch prediction"));
-                    return;
+                console.log("waitForImage")
+                console.log(`waitForImage: ${prediction[1]}`)
+                prediction = await checkPrediction(prediction[1].id)
+                if (prediction[0] == false){
+                    resolve([false, prediction[1]])
                 }
-                prediction = await response.json();
-                console.log({ prediction: prediction });
             }
-            resolve(prediction);
+            console.log("waitForImage resolve")
+            console.log(prediction[1])
+            resolve([true, prediction[1]]);
         } catch (error) {
             reject(error);
         }
@@ -42,7 +44,7 @@ async function waitForImage(prediction : any) {
 async function streamToString(stream: any) {
     const chunks = [];
     for await (const chunk of stream) {
-    chunks.push(chunk);
+        chunks.push(chunk);
     }
     return Buffer.concat(chunks).toString('utf8');
 }
@@ -97,7 +99,7 @@ export async function POST(req: NextRequest) {
             console.log('called')
             const parsedTrans = await web3Connection.getParsedTransaction(
                 txSig,
-                { maxSupportedTransactionVersion: 0 }
+                { maxSupportedTransactionVersion: 0, commitment: "confirmed" }
             )
             if (parsedTrans != null){
                 console.log(parsedTrans.transaction.message.instructions)
@@ -158,34 +160,71 @@ export async function POST(req: NextRequest) {
             origin,
           ).toString();
 
-        const response = await axios.post(`${origin}/api/predictions`, {
-            prompt: parsedBody[0]
-        })
+        // const response = await axios.post(`${origin}/api/predictions`, {
+        //     prompt: parsedBody[0]
+        // })
 
-        let prediction = response.data
+        let prediction = await genImgPrediction(parsedBody[0])
+        console.log("prediction")
+        console.log(prediction)
+        console.log("------")
+        if (prediction[0] == false){
+            return new Response(prediction[1], {
+                status: 400,
+                headers: ACTIONS_CORS_HEADERS,
+            });
+        }
 
-        let returnedSuccess = await waitForImage(prediction) as {output: Array<string>}
+        let [returnedSuccess, returnedPrediction] = await waitForImage(prediction)
+        if (returnedSuccess == false) {
+            const generateAgainOnError = {
+                type: "action",
+                icon: `${requestUrl.origin}/robot-artist.jpg`,
+                title: `There was an error generating your image..`,
+                description: `${returnedPrediction}`,
+                label: "nft",
+                links: {
+                    actions: [
+                        {
+                            label: 'Generate again? ($0.10 USDC)', // button text
+                            href: `${baseHref}&prompt=${parsedBody[0]}&email=${parsedBody[1]}`, // this href will have a text input
+                        },
+                    ]
+                },
+            };
+
+            return new Response(JSON.stringify(generateAgainOnError), {
+                status: 201,
+                headers: ACTIONS_CORS_HEADERS
+            })
+        }
 
         console.log('ahsdas')
-        console.log(returnedSuccess)
+        console.log(returnedPrediction)
 
         const data = "asd"
         const test = {
             type: "action",
-            icon: `${returnedSuccess.output[0]}`,
+            icon: `${returnedPrediction.output[0]}`,
             title: `Your image has been generated!`,
-            description: `${returnedSuccess.output[0]}`,
+            description: `${returnedPrediction.output[0]}`,
             label: "nft",
             links: {
                 actions: [
                     {
-                      label: 'Mint as NFT?', // button text
-                      href: `${baseHref}&prompt=${parsedBody[0]}&email=${parsedBody[1]}`, // this href will have a text input
+                      label: 'Create as a Pump.Fun token?', // button text
+                      href: `${origin}/api/action/createCollection?minter=${toPubKey}&imgURL=${encodeURIComponent(returnedPrediction.output[0])}&name={name}&ticker={ticker}`, // this href will have a text input
                       parameters: [
                         {
-                          name: "amount", // field name
-                          label: "Enter a custom SOL amount", // text input placeholder
+                          name: "name", // field name
+                          label: "Enter token name", // text input placeholder
+                          required: true
                         },
+                        {
+                            name: "ticker", // field name
+                            label: "Enter token ticker", // text input placeholder
+                            required: true
+                          },
                       ],
                     },
                     {
