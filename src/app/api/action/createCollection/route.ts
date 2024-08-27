@@ -85,13 +85,22 @@ export async function POST(req: NextRequest) {
     const buffer = await fileFetch.arrayBuffer();
     const fileData = Buffer.from(buffer);
 
-    const dirName = `${process.cwd()}/public/imgs`
-    if (fs.existsSync(dirName) == false) {
-        fs.mkdirSync(dirName, { recursive: true })
-        console.log(`created ${process.cwd()}/public/imgs`)
-    } else {
-        console.log(`${process.cwd()}/public/imgs dir already exists`)
-    }
+    let dirName = `${process.cwd()}/public/imgs`
+
+    if (process.env.NODE_ENV == "development"){
+        dirName = `${process.cwd()}/public/imgs`
+    } else if (process.env.NODE_ENV == "production") {
+        dirName = `${process.cwd()}`
+    }  
+
+    console.log(dirName)
+
+    // if (fs.existsSync(dirName) == false) {
+    //     fs.mkdirSync(dirName, { recursive: true })
+    //     console.log(`created ${process.cwd()}/public/imgs`)
+    // } else {
+    //     console.log(`${process.cwd()}/public/imgs dir already exists`)
+    // }
 
     const path = `${dirName}/${tokenTicker}.${extname(imgurl).slice(1)}`;
 
