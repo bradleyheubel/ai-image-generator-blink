@@ -1,7 +1,7 @@
-// 'use client';
+'use client';
  
-// import { useState } from "react";
-// import Image from "next/image";
+import { useState } from "react";
+import Image from "next/image";
 
 // interface Prediction {
 //   id: string;
@@ -12,7 +12,7 @@
  
 // const sleep = (ms : any) => new Promise((r) => setTimeout(r, ms));
  
-// export default function Home() {
+export default function Home() {
 //   const [prediction, setPrediction] = useState<Prediction | null>(null);
 //   const [error, setError] = useState(null);
  
@@ -50,45 +50,46 @@
 //     }
 //   };
  
-//   return (
-//     <div className="container max-w-2xl mx-auto p-5">
-//       <h1 className="py-6 text-center font-bold text-2xl">
-//         Dream something with{" "}
-//         <a href="https://replicate.com/stability-ai/sdxl?utm_source=project&utm_project=getting-started">
-//           SDXL
-//         </a>
-//       </h1>
+  return (
+    <div className="container max-w-2xl mx-auto p-5">
+        <p>Blink</p>
+      {/* <h1 className="py-6 text-center font-bold text-2xl">
+        Dream something with{" "}
+        <a href="https://replicate.com/stability-ai/sdxl?utm_source=project&utm_project=getting-started">
+          SDXL
+        </a>
+      </h1>
  
-//       <form className="w-full flex" onSubmit={handleSubmit}>
-//         <input
-//           type="text"
-//           className="flex-grow"
-//           name="prompt"
-//           placeholder="Enter a prompt to display an image"
-//         />
-//         <button className="button" type="submit">
-//           Go!
-//         </button>
-//       </form>
+      <form className="w-full flex" onSubmit={handleSubmit}>
+        <input
+          type="text"
+          className="flex-grow"
+          name="prompt"
+          placeholder="Enter a prompt to display an image"
+        />
+        <button className="button" type="submit">
+          Go!
+        </button>
+      </form>
  
-//       {error && <div>{error}</div>}
+      {error && <div>{error}</div>}
  
-//       {prediction && (
-//         <>
-//           {prediction.output && (
-//             <div className="image-wrapper mt-5">
-//               <Image
-//                 src={prediction.output[prediction.output.length - 1]}
-//                 alt="output"
-//                 sizes="100vw"
-//                 height={768}
-//                 width={768}
-//               />
-//             </div>
-//           )}
-//           <p className="py-3 text-sm opacity-50">status: {prediction.status}</p>
-//         </>
-//       )}
-//     </div>
-//   );
-// // }
+      {prediction && (
+        <>
+          {prediction.output && (
+            <div className="image-wrapper mt-5">
+              <Image
+                src={prediction.output[prediction.output.length - 1]}
+                alt="output"
+                sizes="100vw"
+                height={768}
+                width={768}
+              />
+            </div>
+          )}
+          <p className="py-3 text-sm opacity-50">status: {prediction.status}</p>
+        </>
+      )} */}
+    </div>
+  );
+}

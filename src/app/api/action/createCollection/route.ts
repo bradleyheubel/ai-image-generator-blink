@@ -8,40 +8,40 @@ import { extname } from 'path';
 //const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
 const connection = new Connection(clusterApiUrl("mainnet-beta"));
 
-export async function GET(req: NextRequest) {
+// export async function GET(req: NextRequest) {
 
-    const requestUrl = new URL(req.url);
-    //const { toPubkey } = validatedQueryParams(requestUrl);
-    //const toPubKey = new PublicKey(requestUrl.searchParams.get('to')!)
+//     const requestUrl = new URL(req.url);
+//     //const { toPubkey } = validatedQueryParams(requestUrl);
+//     //const toPubKey = new PublicKey(requestUrl.searchParams.get('to')!)
     
-    const basePumpHref = new URL(
-        `/api/action/createCollection`,
-        requestUrl.origin,
-    ).toString();
+//     const basePumpHref = new URL(
+//         `/api/action/createCollection`,
+//         requestUrl.origin,
+//     ).toString();
 
-    let response: ActionGetResponse = {
-        type: "action",
-        icon: `${requestUrl.origin}/robot-artist.jpg`,
-        title: "Generate AI Image",
-        description: "Generate an AI image",
-        label: "generate",
-        links: {
-            actions: [
-                {
-                  label: 'test pumpfun', // button text
-                  href: `${basePumpHref}`, // this href will have a text input
-                },
-            ]
-        },
-      };
+//     let response: ActionGetResponse = {
+//         type: "action",
+//         icon: `${requestUrl.origin}/robot-artist.jpg`,
+//         title: "Generate AI Image",
+//         description: "Generate an AI image",
+//         label: "generate",
+//         links: {
+//             actions: [
+//                 {
+//                   label: 'test pumpfun', // button text
+//                   href: `${basePumpHref}`, // this href will have a text input
+//                 },
+//             ]
+//         },
+//       };
   
-    return NextResponse.json(response, {
-      headers: ACTIONS_CORS_HEADERS,
-    });
-}
+//     return NextResponse.json(response, {
+//       headers: ACTIONS_CORS_HEADERS,
+//     });
+// }
   
-// ensures cors
-export const OPTIONS = GET;
+// // ensures cors
+// export const OPTIONS = GET;
 
 
 async function streamToString(stream: any) {
@@ -105,11 +105,11 @@ export async function POST(req: NextRequest) {
     const formData = new FormData();
     formData.append("file", await fs.openAsBlob(path)), // Image file
     formData.append("name", tokenName),
-    formData.append("symbol", tokenTicker),
-    formData.append("description", "This is an example token created via PumpPortal.fun"),
-    formData.append("twitter", "https://x.com/a1lon9/status/1812970586420994083"),
-    formData.append("telegram", "https://x.com/a1lon9/status/1812970586420994083"),
-    formData.append("website", "https://pumpportal.fun"),
+    formData.append("symbol", tokenTicker.toUpperCase()),
+    formData.append("description", ""),
+    formData.append("twitter", ""),
+    formData.append("telegram", ""),
+    formData.append("website", ""),
     formData.append("showName", "true");
 
     //axios.get("")
@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
     const payload: ActionPostResponse = await createPostResponse({
         fields: {
           transaction,
-          message: "Launched!",
+          message: `Launched to Pump.Fun! You also hold 0.001 SOL worth of ${tokenTicker.toUpperCase()}`,
         },
       });
     

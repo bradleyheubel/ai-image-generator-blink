@@ -9,6 +9,7 @@ import axios from "axios";
 import { Connection, PublicKey } from "@solana/web3.js";
 import clientPromise from "../../../mongodb"
 import { checkPrediction, genImgPrediction } from "@/app/imgGen";
+import {Prediction} from "replicate";
 
 const sleep = (ms: number | undefined) => {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -16,7 +17,11 @@ const sleep = (ms: number | undefined) => {
 
 let origin = ""
 
-async function waitForImage(prediction : any) {
+function isPrediction(result: any): result is [boolean, Prediction] {
+    return result[1] && typeof result[1] === 'object' && 'status' in result[1];
+}
+
+async function waitForImage(prediction : [boolean, Prediction]) : Promise<[boolean, Prediction]> {
     return new Promise(async (resolve, reject) => {
         try {
             while (
@@ -27,10 +32,17 @@ async function waitForImage(prediction : any) {
                 await sleep(500);
                 console.log("waitForImage")
                 console.log(`waitForImage: ${prediction[1]}`)
-                prediction = await checkPrediction(prediction[1].id)
-                if (prediction[0] == false){
-                    resolve([false, prediction[1]])
+                const result = await checkPrediction(prediction[1].id)
+
+                if (isPrediction(result)) {
+                    prediction = result;
+                } else {
+                    resolve([false, prediction[1]]);
+                    return;
                 }
+                // if (prediction[0] == false){
+                //     resolve([false, prediction[1]])
+                // }
             }
             console.log("waitForImage resolve")
             console.log(prediction[1])
@@ -91,7 +103,7 @@ export async function POST(req: NextRequest) {
         console.log(txSig)
 
         let doesMemoExist = false
-        const web3Connection = new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`)
+        const web3Connection = new Connection(`https://devnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`)
         let timeoutCounter = 0
 
         while (doesMemoExist == false){
@@ -169,13 +181,14 @@ export async function POST(req: NextRequest) {
         console.log(prediction)
         console.log("------")
         if (prediction[0] == false){
-            return new Response(prediction[1], {
+            return new Response(prediction[1] as string, {
                 status: 400,
                 headers: ACTIONS_CORS_HEADERS,
             });
         }
 
         let [returnedSuccess, returnedPrediction] = await waitForImage(prediction)
+
         if (returnedSuccess == false) {
             const generateAgainOnError = {
                 type: "action",
@@ -212,7 +225,7 @@ export async function POST(req: NextRequest) {
             links: {
                 actions: [
                     {
-                      label: 'Create as a Pump.Fun token?', // button text
+                      label: 'Create Pump.Fun token?', // button text
                       href: `${origin}/api/action/createCollection?minter=${toPubKey}&imgURL=${encodeURIComponent(returnedPrediction.output[0])}&name={name}&ticker={ticker}`, // this href will have a text input
                       parameters: [
                         {
@@ -224,7 +237,7 @@ export async function POST(req: NextRequest) {
                             name: "ticker", // field name
                             label: "Enter token ticker", // text input placeholder
                             required: true
-                          },
+                        },
                       ],
                     },
                     {

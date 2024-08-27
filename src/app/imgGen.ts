@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import Replicate from "replicate";
+import Replicate, { Prediction } from "replicate";
  
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
@@ -11,7 +11,7 @@ const WEBHOOK_HOST = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : process.env.NGROK_HOST;
  
-export async function genImgPrediction(prompt : string) {
+export async function genImgPrediction(prompt : string): Promise<[boolean, Prediction] | [false, string]>{
   if (!process.env.REPLICATE_API_TOKEN) {
     throw new Error(
       'The REPLICATE_API_TOKEN environment variable is not set. See README.md for instructions on how to set it.'
@@ -54,4 +54,4 @@ export async function checkPrediction(id: string) {
     }
    
     return [true, prediction]
-  }
+}
