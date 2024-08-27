@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     if (process.env.NODE_ENV == "development"){
         dirName = `${process.cwd()}/public/imgs`
     } else if (process.env.NODE_ENV == "production") {
-        dirName = `${process.cwd()}`
+        dirName = `${process.cwd()}/tmp`
     }  
 
     console.log(dirName)
