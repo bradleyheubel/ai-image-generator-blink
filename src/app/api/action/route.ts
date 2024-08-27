@@ -17,8 +17,8 @@ import {
 } from "@solana/actions";
 import { NextActionLink } from "@solana/actions-spec";
 import { useSearchParams } from "next/navigation";
-const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
-//const connection = new Connection(clusterApiUrl("mainnet-beta"));
+//const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+const connection = new Connection(clusterApiUrl("mainnet-beta"));
 import { getCompletedAction, generateImgAction } from "@/app/helper";
 import axios from "axios";
 

@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
         console.log(txSig)
 
         let doesMemoExist = false
-        const web3Connection = new Connection(`https://devnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`)
+        const web3Connection = new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`)
         let timeoutCounter = 0
 
         while (doesMemoExist == false){
@@ -246,7 +246,7 @@ export async function POST(req: NextRequest) {
                     },
                 ]
             },
-          };
+        };
         return new Response(JSON.stringify(test), {
             status: 201,
             headers: ACTIONS_CORS_HEADERS
