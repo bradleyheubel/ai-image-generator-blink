@@ -33,11 +33,6 @@ export async function GET(req: NextRequest) {
         requestUrl.origin,
       ).toString();
 
-      const basePumpHref = new URL(
-        `/api/action/createCollection?to=${toPubkey.toBase58()}`,
-        requestUrl.origin,
-      ).toString();
-
   let response: ActionGetResponse = {
     type: "action",
     icon: `${requestUrl.origin}/robot-artist.jpg`,
@@ -63,10 +58,6 @@ export async function GET(req: NextRequest) {
                   label: "Email address to receive image",
                 },
               ],
-            },
-            {
-              label: 'test pumpfun', // button text
-              href: `${basePumpHref}`, // this href will have a text input
             },
         ]
     },
