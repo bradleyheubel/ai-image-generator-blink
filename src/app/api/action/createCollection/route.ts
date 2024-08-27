@@ -84,28 +84,22 @@ export async function POST(req: NextRequest) {
     const fileFetch = await fetch(imgurl)
     const buffer = await fileFetch.arrayBuffer();
     const fileData = Buffer.from(buffer);
+    const blob = new Blob([fileData])
 
-    let dirName = `${process.cwd()}/public/imgs`
+    // let dirName = `${process.cwd()}/public/imgs`
 
-    if (process.env.NODE_ENV == "development"){
-        dirName = `${process.cwd()}/public/imgs`
-    } else if (process.env.NODE_ENV == "production") {
-        dirName = `${process.cwd()}/tmp`
-    }  
+    // if (process.env.NODE_ENV == "development"){
+    //     dirName = `${process.cwd()}/public/imgs`
+    // } else if (process.env.NODE_ENV == "production") {
+    //     dirName = `${process.cwd()}/tmp`
+    // }  
 
-    console.log(dirName)
+    // console.log(dirName)
 
-    // if (fs.existsSync(dirName) == false) {
-    //     fs.mkdirSync(dirName, { recursive: true })
-    //     console.log(`created ${process.cwd()}/public/imgs`)
-    // } else {
-    //     console.log(`${process.cwd()}/public/imgs dir already exists`)
-    // }
+    // const path = `${dirName}/${tokenTicker}.${extname(imgurl).slice(1)}`;
 
-    const path = `${dirName}/${tokenTicker}.${extname(imgurl).slice(1)}`;
-
-    const writtenFile = fs.writeFileSync(path, fileData);
-    console.log(path)
+    // const writtenFile = fs.writeFileSync(path, fileData);
+    // console.log(path)
 
     // const { searchParams } = new URL(req.url);
     // // amount is just to show how to decide the next action
@@ -120,7 +114,7 @@ export async function POST(req: NextRequest) {
     const sender = new PublicKey(toPubKey);
 
     const formData = new FormData();
-    formData.append("file", await fs.openAsBlob(path)), // Image file
+    formData.append("file", blob), // Image file await fs.openAsBlob(path)
     formData.append("name", tokenName),
     formData.append("symbol", tokenTicker.toUpperCase()),
     formData.append("description", ""),
