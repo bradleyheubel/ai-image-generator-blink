@@ -22,9 +22,9 @@ export const getCompletedAction = (data: Array<string>): NextActionLink => {
     // return response
 };
 
-export const generateImgAction = (data : Array<string>) : NextActionLink => {
+export const generateImgAction = (origin: string, data : Array<string>) : NextActionLink => {
   return {
     type: "post",
-    href: `http://localhost:3000/api/action/generate?data=${JSON.stringify(data)}`
+    href: `${origin}/api/action/generate?data=${JSON.stringify(data)}`
   }
 }

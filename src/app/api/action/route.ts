@@ -74,6 +74,9 @@ export const OPTIONS = GET;
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as { account: string; signature: string };
+    const requestUrl = new URL(req.url);
+    const origin = requestUrl.origin
+
 
     const { searchParams } = new URL(req.url);
     // amount is just to show how to decide the next action
@@ -111,7 +114,7 @@ export async function POST(req: NextRequest) {
         await createPostResponse({
           fields: {
             links: {
-              next: generateImgAction([prompt, email]) 
+              next: generateImgAction(origin, [prompt, email]) 
             },
             transaction: tx,
             message: `Generated image`,
