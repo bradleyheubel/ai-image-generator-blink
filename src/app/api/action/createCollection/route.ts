@@ -4,11 +4,16 @@ import fs from 'fs';
 import { ActionGetResponse, ActionPostResponse, ACTIONS_CORS_HEADERS, createPostResponse } from '@solana/actions';
 import axios from 'axios';
 import { extname } from 'path';
+import { USE_DEV } from '@/consts';
 
-//const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
-const connection = (process.env.HELIUS_API_TOKEN != "") ? 
-    new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`) : 
-    new Connection(clusterApiUrl("mainnet-beta"));
+let connection: Connection;
+if (USE_DEV){
+  connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+} else {
+  connection = (process.env.HELIUS_API_TOKEN != "") ? 
+  new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`) : 
+  new Connection(clusterApiUrl("mainnet-beta"));
+}
 
 export async function GET(req: NextRequest) {
 

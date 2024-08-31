@@ -10,6 +10,8 @@ import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
 import clientPromise from "../../../mongodb"
 import { checkPrediction, genImgPrediction } from "@/app/imgGen";
 import {Prediction} from "replicate";
+import { Resend } from "resend";
+import { USE_DEV } from "@/consts";
 
 const sleep = (ms: number | undefined) => {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -61,6 +63,30 @@ async function streamToString(stream: any) {
     return Buffer.concat(chunks).toString('utf8');
 }
 
+async function sendEmail(email: string, imgURL: string) {
+    const resend = new Resend(process.env.RESEND_API_KEY)
+    try {
+        const { data, error } = await resend.emails.send({
+          from: 'Img Gen Blink <sender@imggenblink.xyz>',
+          to: [`${email}`],
+          subject: 'Your AI generated image via Solana blink',
+          html:`<div>
+                <img src=${imgURL} alt="Image" />
+                <p>${imgURL}</p>
+            </div>`
+        });
+    
+        if (error) {
+          return error
+        }
+    
+        return true
+
+    } catch (error) {
+        return error
+    }
+}
+
 export async function POST(req: NextRequest) {
     try {
         const requestUrl = new URL(req.url);
@@ -104,9 +130,16 @@ export async function POST(req: NextRequest) {
 
         let doesMemoExist = false
 
-        const web3Connection = (process.env.HELIUS_API_TOKEN != "") ? 
-            new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`) : 
-            new Connection(clusterApiUrl("mainnet-beta"));
+        let web3Connection : Connection 
+        if (USE_DEV) {
+            web3Connection = (process.env.HELIUS_API_TOKEN != "") ? 
+                new Connection(`https://devnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`) : 
+                new Connection(clusterApiUrl("devnet"), "confirmed");
+        } else {
+            web3Connection = (process.env.HELIUS_API_TOKEN != "") ? 
+                new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`) : 
+                new Connection(clusterApiUrl("mainnet-beta"));
+        }
 
         let timeoutCounter = 0
 
@@ -218,6 +251,18 @@ export async function POST(req: NextRequest) {
 
         console.log('ahsdas')
         console.log(returnedPrediction)
+
+        if (parsedBody[1] != ""){
+            const emailResponse = await sendEmail(parsedBody[1], returnedPrediction.output[0])
+
+            if (emailResponse != true) { 
+                return new Response(`${emailResponse}`, {
+                    status: 400,
+                    headers: ACTIONS_CORS_HEADERS,
+                });
+            }
+        }
+
 
         const data = "asd"
         const test = {

@@ -19,14 +19,18 @@ import { NextActionLink } from "@solana/actions-spec";
 import { useSearchParams } from "next/navigation";
 import * as splToken from '@solana/spl-token';
 
-//const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
-const connection = (process.env.HELIUS_API_TOKEN != "") ? 
+let connection: Connection;
+if (USE_DEV){
+  connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+} else {
+  connection = (process.env.HELIUS_API_TOKEN != "") ? 
   new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`) : 
   new Connection(clusterApiUrl("mainnet-beta"));
+}
 
 import { getCompletedAction, generateImgAction } from "@/app/helper";
 import axios from "axios";
-import { USC_DECIMALS, USDC_PUB_KEY, WALLET_PUB_KEY } from "@/consts";
+import { USC_DECIMALS, USDC_PUB_KEY, USE_DEV, WALLET_PUB_KEY } from "@/consts";
 
 const pubkeyToDonateTo = '4ypD7kxRj9DLF3PMxsY3qvp8YdNhAHZRnN3fyVDh5CFX'
 
@@ -82,8 +86,6 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as { account: string; signature: string };
     const requestUrl = new URL(req.url);
     const origin = requestUrl.origin
-
-
     const { searchParams } = new URL(req.url);
     // amount is just to show how to decide the next action
     const prompt = searchParams.get("prompt") as string;
@@ -166,6 +168,8 @@ export async function POST(req: NextRequest) {
         programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
       }),
     );
+
+    console.log("execute next post")
 
     return NextResponse.json(
         await createPostResponse({
