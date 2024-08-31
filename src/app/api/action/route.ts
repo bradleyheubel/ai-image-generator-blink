@@ -17,19 +17,25 @@ import {
 } from "@solana/actions";
 import { NextActionLink } from "@solana/actions-spec";
 import { useSearchParams } from "next/navigation";
+import * as splToken from '@solana/spl-token';
+
 //const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
-const connection = new Connection(clusterApiUrl("mainnet-beta"));
+const connection = (process.env.HELIUS_API_TOKEN != "") ? 
+  new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`) : 
+  new Connection(clusterApiUrl("mainnet-beta"));
+
 import { getCompletedAction, generateImgAction } from "@/app/helper";
 import axios from "axios";
+import { USC_DECIMALS, USDC_PUB_KEY, WALLET_PUB_KEY } from "@/consts";
 
 const pubkeyToDonateTo = '4ypD7kxRj9DLF3PMxsY3qvp8YdNhAHZRnN3fyVDh5CFX'
 
 export async function GET(req: NextRequest) {
     const requestUrl = new URL(req.url);
-    const { toPubkey } = validatedQueryParams(requestUrl);
+    //const { toPubkey } = validatedQueryParams(requestUrl);
 
     const baseHref = new URL(
-        `/api/action?to=${toPubkey.toBase58()}`,
+        `/api/action?`,
         requestUrl.origin,
       ).toString();
 
@@ -43,7 +49,7 @@ export async function GET(req: NextRequest) {
         actions: [
             {
               label: 'Generate image ($0.10 USDC)', // button text
-              href: `${baseHref}&prompt={prompt}&email={email}`, // this href will have a text input
+              href: `${baseHref}prompt={prompt}&email={email}`, // this href will have a text input
               parameters: [
                 {
                   type: "textarea",
@@ -91,20 +97,71 @@ export async function POST(req: NextRequest) {
         headers: ACTIONS_CORS_HEADERS,
       });
     }
+    const decimals = USC_DECIMALS; // In the example, we use 6 decimals for USDC, but you can use any SPL token
+    const mintAddress = new PublicKey(`${USDC_PUB_KEY}`); // replace this with any SPL token mint address
 
-    const sender = new PublicKey(body.account);
-    const tx = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey: sender,
-        toPubkey: new PublicKey(pubkeyToDonateTo),
-        lamports: LAMPORTS_PER_SOL * 0.0001,
-      })
+    // converting value to fractional units
+
+    let instructions = []
+
+    let transferAmount: any = 0.10;
+    transferAmount = transferAmount.toFixed(decimals);
+    transferAmount = transferAmount * Math.pow(10, decimals);
+
+    let userAccount = new PublicKey(body.account)
+    let paymentWallet = new PublicKey(WALLET_PUB_KEY)
+
+    const fromTokenAccount = await splToken.getAssociatedTokenAddress(
+      mintAddress,
+      userAccount,
+      false,
+      splToken.TOKEN_PROGRAM_ID,
+      splToken.ASSOCIATED_TOKEN_PROGRAM_ID,
     );
-    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-    tx.feePayer = sender;
-    tx.add(
+
+    let toTokenAccount = await splToken.getAssociatedTokenAddress(
+      mintAddress,
+      paymentWallet,
+      true,
+      splToken.TOKEN_PROGRAM_ID,
+      splToken.ASSOCIATED_TOKEN_PROGRAM_ID,
+    );
+
+    const ifexists = await connection.getAccountInfo(toTokenAccount);
+
+    if (!ifexists || !ifexists.data) {
+      let createATAiX = splToken.createAssociatedTokenAccountInstruction(
+        userAccount,
+        toTokenAccount,
+        paymentWallet,
+        mintAddress,
+        splToken.TOKEN_PROGRAM_ID,
+        splToken.ASSOCIATED_TOKEN_PROGRAM_ID,
+      );
+      instructions.push(createATAiX);
+    }
+
+    let transferInstruction = splToken.createTransferInstruction(
+      fromTokenAccount,
+      toTokenAccount,
+      userAccount,
+      transferAmount,
+    );
+    instructions.push(transferInstruction);
+
+    // get the latest blockhash amd block height
+    const { blockhash, lastValidBlockHeight } =
+    await connection.getLatestBlockhash();
+
+    const transaction = new Transaction({
+      feePayer: userAccount,
+      blockhash,
+      lastValidBlockHeight,
+    }).add(...instructions);
+
+    transaction.add(
       new TransactionInstruction({
-        keys: [{ pubkey: sender, isSigner: true, isWritable: true }],
+        keys: [{ pubkey: userAccount, isSigner: true, isWritable: true }],
         data: Buffer.from("imggenblink.xyz", "utf-8"),
         programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
       }),
@@ -116,7 +173,7 @@ export async function POST(req: NextRequest) {
             links: {
               next: generateImgAction(origin, [prompt, email]) 
             },
-            transaction: tx,
+            transaction,
             message: `Generated image`,
           },
         }),
@@ -135,21 +192,3 @@ export async function POST(req: NextRequest) {
     });
   }
 }
-
-function validatedQueryParams(requestUrl: URL) {
-    let toPubkey: PublicKey = new PublicKey(
-      pubkeyToDonateTo,
-    );
-  
-    try {
-      if (requestUrl.searchParams.get('to')) {
-        toPubkey = new PublicKey(requestUrl.searchParams.get('to')!);
-      }
-    } catch (err) {
-      throw 'Invalid input query parameter: to';
-    }
-  
-    return {
-      toPubkey,
-    };
-  }

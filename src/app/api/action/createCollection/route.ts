@@ -6,7 +6,9 @@ import axios from 'axios';
 import { extname } from 'path';
 
 //const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
-const connection = new Connection(clusterApiUrl("mainnet-beta"));
+const connection = (process.env.HELIUS_API_TOKEN != "") ? 
+    new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`) : 
+    new Connection(clusterApiUrl("mainnet-beta"));
 
 export async function GET(req: NextRequest) {
 
@@ -79,7 +81,15 @@ export async function POST(req: NextRequest) {
     const imgurl = decodeURIComponent(req.nextUrl.searchParams.get('imgURL') || "")
     const tokenName = req.nextUrl.searchParams.get('name') || ""
     const tokenTicker = req.nextUrl.searchParams.get('ticker') || ""
+    const desc = req.nextUrl.searchParams.get('desc') || ""
+    const twitter = decodeURIComponent(req.nextUrl.searchParams.get('x') || "")
+    const telegram = decodeURIComponent(req.nextUrl.searchParams.get('tg') || "")
+    const website = decodeURIComponent(req.nextUrl.searchParams.get('web') || "")
+
     console.log(`Data: ${toPubKey} | ${imgurl} | ${tokenName} | ${tokenTicker}`)
+    console.log(`${desc}`)
+    console.log(`${twitter} | ${telegram} | ${website}`)
+
 
     const fileFetch = await fetch(imgurl)
     const buffer = await fileFetch.arrayBuffer();
@@ -117,10 +127,10 @@ export async function POST(req: NextRequest) {
     formData.append("file", blob), // Image file await fs.openAsBlob(path)
     formData.append("name", tokenName),
     formData.append("symbol", tokenTicker.toUpperCase()),
-    formData.append("description", ""),
-    formData.append("twitter", ""),
-    formData.append("telegram", ""),
-    formData.append("website", ""),
+    formData.append("description", desc),
+    formData.append("twitter", twitter),
+    formData.append("telegram", telegram),
+    formData.append("website", website),
     formData.append("showName", "true");
 
     //axios.get("")

@@ -6,7 +6,7 @@ import {
     ActionPostResponse
   } from "@solana/actions";
 import axios from "axios";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
 import clientPromise from "../../../mongodb"
 import { checkPrediction, genImgPrediction } from "@/app/imgGen";
 import {Prediction} from "replicate";
@@ -103,7 +103,11 @@ export async function POST(req: NextRequest) {
         console.log(txSig)
 
         let doesMemoExist = false
-        const web3Connection = new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`)
+
+        const web3Connection = (process.env.HELIUS_API_TOKEN != "") ? 
+            new Connection(`https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_TOKEN}`) : 
+            new Connection(clusterApiUrl("mainnet-beta"));
+
         let timeoutCounter = 0
 
         while (doesMemoExist == false){
@@ -168,7 +172,7 @@ export async function POST(req: NextRequest) {
         }
 
         const baseHref = new URL(
-            `/api/action?to=${toPubKey}`,
+            `/api/action?`,
             origin,
           ).toString();
 
@@ -200,7 +204,7 @@ export async function POST(req: NextRequest) {
                     actions: [
                         {
                             label: 'Generate again? ($0.10 USDC)', // button text
-                            href: `${baseHref}&prompt=${parsedBody[0]}&email=${parsedBody[1]}`, // this href will have a text input
+                            href: `${baseHref}prompt=${parsedBody[0]}&email=${parsedBody[1]}`, // this href will have a text input
                         },
                     ]
                 },
@@ -221,12 +225,12 @@ export async function POST(req: NextRequest) {
             icon: `${returnedPrediction.output[0]}`,
             title: `Your image has been generated!`,
             description: `${returnedPrediction.output[0]}`,
-            label: "nft",
+            label: "pumpfunToken",
             links: {
                 actions: [
                     {
                       label: 'Create Pump.Fun token?', // button text
-                      href: `${origin}/api/action/createCollection?minter=${toPubKey}&imgURL=${encodeURIComponent(returnedPrediction.output[0])}&name={name}&ticker={ticker}`, // this href will have a text input
+                      href: `${origin}/api/action/createCollection?minter=${toPubKey}&imgURL=${encodeURIComponent(returnedPrediction.output[0])}&name={name}&ticker={ticker}&desc={desc}&x={x}&tg={tg}&web={web}`, // this href will have a text input
                       parameters: [
                         {
                           name: "name", // field name
@@ -238,12 +242,32 @@ export async function POST(req: NextRequest) {
                             label: "Enter token ticker", // text input placeholder
                             required: true
                         },
+                        {
+                            name: "desc", // field name
+                            label: "Token description", // text input placeholder
+                            required: true
+                        },
+                        {
+                            name: "x", // field name
+                            label: "X profile (optional)", // text input placeholder
+                            required: false
+                        },
+                        {
+                            name: "tg", // field name
+                            label: "Telegram (optional)", // text input placeholder
+                            required: false
+                        },
+                        {
+                            name: "web", // field name
+                            label: "Website (optional)", // text input placeholder
+                            required: false
+                        },
                       ],
                     },
-                    {
-                        label: 'Generate again? ($0.10 USDC)', // button text
-                        href: `${baseHref}&prompt=${parsedBody[0]}&email=${parsedBody[1]}`, // this href will have a text input
-                    },
+                    // {
+                    //     label: 'Generate again? ($0.10 USDC)', // button text
+                    //     href: `${baseHref}&prompt=${parsedBody[0]}&email=${parsedBody[1]}`, // this href will have a text input
+                    // },
                 ]
             },
         };
