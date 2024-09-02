@@ -18,8 +18,6 @@ if (USE_DEV){
 export async function GET(req: NextRequest) {
 
     const requestUrl = new URL(req.url);
-    //const { toPubkey } = validatedQueryParams(requestUrl);
-    //const toPubKey = new PublicKey(requestUrl.searchParams.get('to')!)
     
     const basePumpHref = new URL(
         `/api/action/createCollection`,
@@ -61,27 +59,6 @@ async function streamToString(stream: any) {
 
 export async function POST(req: NextRequest) {
 
-    //const body = (await req.json()) as { account: string; signature: string };
-    // const body = await streamToString(req.body)
-    // if (body.length == 0) {
-    //     return new Response("Empty body", {
-    //         status: 400,
-    //         headers: ACTIONS_CORS_HEADERS,
-    //     });
-    // }
-
-    // const params = req.nextUrl.searchParams.get('data') || ""
-    // const decodedParams = decodeURIComponent(params)
-    // if (decodedParams == "" || decodedParams == null){
-    //     return new Response("No data param", {
-    //         status: 400,
-    //         headers: ACTIONS_CORS_HEADERS,
-    //     });
-    // }
-    // const parsedBody = JSON.parse(decodedParams)
-    // console.log(parsedBody)
-
-
     const toPubKey = req.nextUrl.searchParams.get('minter') || ""
     const imgurl = decodeURIComponent(req.nextUrl.searchParams.get('imgURL') || "")
     const tokenName = req.nextUrl.searchParams.get('name') || ""
@@ -100,28 +77,6 @@ export async function POST(req: NextRequest) {
     const buffer = await fileFetch.arrayBuffer();
     const fileData = Buffer.from(buffer);
     const blob = new Blob([fileData])
-
-    // let dirName = `${process.cwd()}/public/imgs`
-
-    // if (process.env.NODE_ENV == "development"){
-    //     dirName = `${process.cwd()}/public/imgs`
-    // } else if (process.env.NODE_ENV == "production") {
-    //     dirName = `${process.cwd()}/tmp`
-    // }  
-
-    // console.log(dirName)
-
-    // const path = `${dirName}/${tokenTicker}.${extname(imgurl).slice(1)}`;
-
-    // const writtenFile = fs.writeFileSync(path, fileData);
-    // console.log(path)
-
-    // const { searchParams } = new URL(req.url);
-    // // amount is just to show how to decide the next action
-    // const prompt = searchParams.get("prompt") as string;
-
-    // // stage is the stage of the action in the chain
-    // const email = searchParams.get("email") as string;
 
     // Generate a random keypair for token
     const mintKeypair = Keypair.generate(); 

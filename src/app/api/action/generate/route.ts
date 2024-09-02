@@ -42,9 +42,6 @@ async function waitForImage(prediction : [boolean, Prediction]) : Promise<[boole
                     resolve([false, prediction[1]]);
                     return;
                 }
-                // if (prediction[0] == false){
-                //     resolve([false, prediction[1]])
-                // }
             }
             console.log("waitForImage resolve")
             console.log(prediction[1])
@@ -207,11 +204,8 @@ export async function POST(req: NextRequest) {
         const baseHref = new URL(
             `/api/action?`,
             origin,
-          ).toString();
+        ).toString();
 
-        // const response = await axios.post(`${origin}/api/predictions`, {
-        //     prompt: parsedBody[0]
-        // })
 
         let prediction = await genImgPrediction(parsedBody[0])
         console.log("prediction")
@@ -263,7 +257,6 @@ export async function POST(req: NextRequest) {
             }
         }
 
-
         const data = "asd"
         const test = {
             type: "action",
@@ -309,10 +302,6 @@ export async function POST(req: NextRequest) {
                         },
                       ],
                     },
-                    // {
-                    //     label: 'Generate again? ($0.10 USDC)', // button text
-                    //     href: `${baseHref}&prompt=${parsedBody[0]}&email=${parsedBody[1]}`, // this href will have a text input
-                    // },
                 ]
             },
         };
