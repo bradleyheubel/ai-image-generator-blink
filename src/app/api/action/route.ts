@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     const fromTokenAccount = await splToken.getAssociatedTokenAddress(
       mintAddress,
       userAccount,
-      false,
+      true,
       splToken.TOKEN_PROGRAM_ID,
       splToken.ASSOCIATED_TOKEN_PROGRAM_ID,
     );
