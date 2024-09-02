@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
                   type: "email",
                   required: false,
                   name: "email",
-                  label: "Email address to receive image",
+                  label: "Email address to receive image (optional)",
                 },
               ],
             },
@@ -170,6 +170,7 @@ export async function POST(req: NextRequest) {
     );
 
     console.log("execute next post")
+    console.log(`${origin} /api/action/generate`)
 
     return NextResponse.json(
         await createPostResponse({

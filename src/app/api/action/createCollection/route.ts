@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
                 },
             ]
         },
-      };
+    };
   
     return NextResponse.json(response, {
       headers: ACTIONS_CORS_HEADERS,
@@ -47,7 +47,6 @@ export async function GET(req: NextRequest) {
   
 // ensures cors
 export const OPTIONS = GET;
-
 
 async function streamToString(stream: any) {
     const chunks = [];
@@ -72,7 +71,6 @@ export async function POST(req: NextRequest) {
     console.log(`${desc}`)
     console.log(`${twitter} | ${telegram} | ${website}`)
 
-
     const fileFetch = await fetch(imgurl)
     const buffer = await fileFetch.arrayBuffer();
     const fileData = Buffer.from(buffer);
@@ -92,8 +90,6 @@ export async function POST(req: NextRequest) {
     formData.append("telegram", telegram),
     formData.append("website", website),
     formData.append("showName", "true");
-
-    //axios.get("")
 
     const metadataResponse = await fetch("https://pump.fun/api/ipfs", {
         method: "POST",
@@ -129,8 +125,6 @@ export async function POST(req: NextRequest) {
         console.log("gerated token")
     // get the latest blockhash amd block height
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-
-
   
     const data = await response.arrayBuffer();
 
@@ -149,30 +143,6 @@ export async function POST(req: NextRequest) {
         headers: ACTIONS_CORS_HEADERS,
       });
 
-
-
-
-    // const tx = VersionedTransaction.deserialize(new Uint8Array(data));
-    // tx.sign([mintKeypair, signerKeyPair]);
-
-    //   console.log("Transaction: https://solscan.io/tx/" + signature);
-
-        // const tx = VersionedTransaction.deserialize(new Uint8Array(data));
-    // tx.sign([mintKeypair, signerKeyPair]);
-    // const signature = await web3Connection.sendTransaction(tx)
-    // console.log("Transaction: https://solscan.io/tx/" + signature);
-
-    //const txData = new Uint8Array(data)
-    // const transaction = new Transaction({
-    //     feePayer: sender,
-    //     blockhash,
-    //     lastValidBlockHeight,
-    //   }).add(...txData);
-    
-      
-    //   return Response.json(payload, {
-    //     headers: ACTIONS_CORS_HEADERS,
-    //   });
     } else {
         console.log(response.statusText); // log error
     }
